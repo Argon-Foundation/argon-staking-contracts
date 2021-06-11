@@ -64,7 +64,7 @@ contract ArgonStakeMaster is Ownable {
         );
     }
 
-    function getAllPools() public view returns (address[]) {
+    function getAllPools() public view returns (address[] memory) {
         return pools;
     }
 }
