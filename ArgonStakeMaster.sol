@@ -3,7 +3,7 @@ pragma solidity 0.6.12;
 import "ArgonStakingPool.sol";
 
 contract ArgonStakeMaster is Ownable {
-    address[] public stakingPools;
+    address[] public pools;
     event PoolCreated(
         address owner,
         address newPoolAddress,
@@ -47,7 +47,7 @@ contract ArgonStakeMaster is Ownable {
             address(newStakingPool),
             _poolTokenAmount
         );
-        stakingPools.push(address(newStakingPool));
+        pools.push(address(newStakingPool));
 
         emit PoolCreated(
             msg.sender,
@@ -62,5 +62,9 @@ contract ArgonStakeMaster is Ownable {
             _penaltyAddress,
             _penaltyBlockLength
         );
+    }
+
+    function getAllPools() public view returns (address[]) {
+        return pools;
     }
 }
