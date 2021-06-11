@@ -801,7 +801,7 @@ contract ArgonStakingPool is Ownable, ReentrancyGuard {
     event PoolReplenished(uint256 amount);
     event TokensStaked(address indexed user, uint256 amount, uint256 reward);
     event StakeWithdrawn(address indexed user, uint256 amount, uint256 reward);
-    event EmergencyWithdraw(address indexed user, uint256 amount);
+    event WithdrawAllPools(address indexed user, uint256 amount);
 
     event WithdrawPoolRemainder(address indexed user, uint256 amount);
 
@@ -877,6 +877,38 @@ contract ArgonStakingPool is Ownable, ReentrancyGuard {
             user.amount.mul(tempAccTokensPerShare).div(1e18).sub(
                 user.rewardDebt
             );
+    }
+
+    function getUserInfo(address _user)
+        external
+        view
+        returns (
+            uint256,
+            uint256,
+            uint256[] memory
+        )
+    {
+        UserInfo storage user = userInfo[_user];
+        return (user.amount, user.rewardDebt, user.userPoolIds);
+    }
+
+    function getUserPoolInfo(uint256 _poolId)
+        external
+        view
+        returns (
+            uint256,
+            uint256,
+            uint256,
+            address
+        )
+    {
+        UserPoolInfo storage poolInfo = userPoolInfo[_poolId];
+        return (
+            poolInfo.blockNumber,
+            poolInfo.penaltyEndBlockNumber,
+            poolInfo.amount,
+            poolInfo.owner
+        );
     }
 
     // Update reward variables of the given pool to be up-to-date.
@@ -1001,9 +1033,12 @@ contract ArgonStakingPool is Ownable, ReentrancyGuard {
     }
 
     // Withdraw without caring about rewards. EMERGENCY ONLY.
-    function emergencyWithdraw() external nonReentrant {
+    function withdrawAllPools() external nonReentrant {
         UserInfo storage user = userInfo[msg.sender];
         uint256 totalPenalty = 0;
+        updatePool();
+        uint256 pending = transferPendingReward(user);
+
         for (uint256 i = 0; i < user.userPoolIds.length; i++) {
             uint256 poolId = user.userPoolIds[i];
             UserPoolInfo storage poolInfo = userPoolInfo[poolId];
@@ -1029,8 +1064,7 @@ contract ArgonStakingPool is Ownable, ReentrancyGuard {
                 msg.sender,
                 user.amount.sub(totalPenalty)
             );
-            emit EmergencyWithdraw(msg.sender, user.amount);
-
+            emit WithdrawAllPools(msg.sender, user.amount);
             allStakedAmount = allStakedAmount.sub(user.amount);
             allRewardDebt = allRewardDebt.sub(user.rewardDebt);
             user.amount = 0;
