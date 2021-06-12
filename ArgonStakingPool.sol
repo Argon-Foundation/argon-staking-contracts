@@ -997,7 +997,6 @@ contract ArgonStakingPool is Ownable, ReentrancyGuard {
             if (isPenalty) {
                 if (block.number < finishBlock) {
                     if (block.number <= poolInfo.penaltyEndBlockNumber) {
-                        // ceza kes
                         penaltyAmount = penaltyRate.mul(_amount).div(1e6);
                         stakingToken.transfer(penaltyAddress, penaltyAmount);
                     }
